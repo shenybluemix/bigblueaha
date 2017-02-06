@@ -15,6 +15,9 @@ var cfenv = require('cfenv');
 // create a new express server
 var app = express();
 
+var jsonfile = require('jsonfile');
+var componentfile = 'data/component.json';
+
 // serve the files out of ./public as our main files
 //app.use(express.static(__dirname + '/public'));
 
@@ -55,3 +58,9 @@ app.post('/milestones',function(req,res){
 function callback(body){
   console.log("callback" + JSON.stringify(body));
 }
+
+jsonfile.readFile(componentfile, function(err, obj){
+  console.dir(obj);
+
+  
+});

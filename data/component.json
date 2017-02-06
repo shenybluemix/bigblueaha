@@ -1,0 +1,16 @@
+{
+  "components":[
+    {
+      "reference_prefix":  "SVC"
+    },
+    {
+      "reference_prefix":  "BLD"
+    },
+    {
+      "reference_prefix":  "CMB"
+    },
+    {
+      "reference_prefix":  "CAL"
+    }
+  ]
+}

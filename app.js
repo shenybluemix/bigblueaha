@@ -49,12 +49,14 @@ var get_products_options = {
   json:true
 };
 
+var jsonfile = require('jsonfile');
+var componentfile = 'data/component.json';
+
 //all the components in Aha! excluding product_lines
 var components = new Array();
-var get_products_finished = false;
 var products;
 
-function getComponent(callback){
+function getAllComponents(callback){
   request(get_products_options, function(error,response,body){
     if (error) throw new Error(error);
     //console.log(body);
@@ -71,21 +73,27 @@ function getComponent(callback){
   });
 }
 
+function getComponentList(file, callback ){
+  jsonfile.readFile(file, function(err, obj){
+    callback (obj);
+  });
+}
+
 var release = {
   release:
   {
-    name:'2999 - 01',
-  	release_date : '2999-01-31'
+    name:'2099 - 01',
+  	release_date : '2017-01-31'
   }
 };
 
 
-function postMilestone(){
+function postMilestone(componentArray){
 
    //var len = components.length;
-   var len = 4;
+   var len = componentArray.length;
    for (var j = 0; j < len; j ++){
-     component = components[j];
+     component = componentArray[j];
      console.log(component);
      var post_release_options = {
        method: 'POST',
@@ -104,4 +112,19 @@ function postMilestone(){
 
 }
 
-getComponent(postMilestone);
+app.post('/milestones', function(req,res){
+  getAllComponents(postMilestone);
+  res.send()
+});
+
+getComponentList(componentfile, function(obj){
+    var array = new Array();
+    console.dir(obj);
+    console.log(obj.components.length);
+    components = obj.components;
+    for (var i = 0; i < components.length; i ++){
+        array.push(components[i].reference_prefix);
+    }
+    console.log(array);
+    postMilestone(array);
+});

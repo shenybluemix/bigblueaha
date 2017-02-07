@@ -51,6 +51,8 @@ var get_products_options = {
 
 var jsonfile = require('jsonfile');
 var componentfile = 'data/component.json';
+var releasefile = 'data/release.json';
+
 
 //all the components in Aha! excluding product_lines
 var components = new Array();
@@ -79,17 +81,17 @@ function getComponentList(file, callback ){
   });
 }
 
+
 var release = {
   release:
   {
-    name:'2099 - 01',
+    name:'2017 - 01',
   	release_date : '2017-01-31'
   }
 };
 
 
 function postMilestone(componentArray){
-
    //var len = components.length;
    var len = componentArray.length;
    for (var j = 0; j < len; j ++){
@@ -106,25 +108,32 @@ function postMilestone(componentArray){
      request(post_release_options,function(error,response,body){
        if (error) throw new Error(error);
        console.log(body);
+       //response.send("Create Release: "+ release);
      });
-
    }
-
 }
 
+/**
 app.post('/milestones', function(req,res){
   getAllComponents(postMilestone);
   res.send()
 });
+**/
 
-getComponentList(componentfile, function(obj){
-    var array = new Array();
-    console.dir(obj);
-    console.log(obj.components.length);
-    components = obj.components;
-    for (var i = 0; i < components.length; i ++){
-        array.push(components[i].reference_prefix);
-    }
-    console.log(array);
-    postMilestone(array);
+app.post('/milestones', function(req,res){
+
+  getComponentList(componentfile, function(obj){
+      //Array of the component from component.json
+      var array = new Array();
+      console.dir(obj);
+      console.log(obj.components.length);
+      components = obj.components;
+      for (var i = 0; i < components.length; i ++){
+          array.push(components[i].reference_prefix);
+      }
+      console.log(array);
+      res.send("Component List to post Milestones: " + array.toString());
+      postMilestone(array);
+  });
+
 });

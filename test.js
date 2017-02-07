@@ -58,9 +58,3 @@ app.post('/milestones',function(req,res){
 function callback(body){
   console.log("callback" + JSON.stringify(body));
 }
-
-jsonfile.readFile(componentfile, function(err, obj){
-  console.dir(obj);
-
-  
-});

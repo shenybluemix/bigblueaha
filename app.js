@@ -85,7 +85,7 @@ function getComponentList(file, callback ){
 var release = {
   release:
   {
-    name:'2017 - 01',
+    name:'Auto created Milestone',
   	release_date : '2017-01-31'
   }
 };

@@ -15,6 +15,7 @@ var cfenv = require('cfenv');
 // create a new express server
 var app = express();
 
+
 // serve the files out of ./public as our main files
 //app.use(express.static(__dirname + '/public'));
 
@@ -31,6 +32,7 @@ app.listen(appEnv.port, '0.0.0.0', function() {
 
 var request = require("request");
 
+var config = require ('./config.js').config;
 var base_url = 'https://bigblue.aha.io';
 var access_token = 'Bearer 14828d1e592ec3ae51b09f89dd4b4988af1a69320c9ca1c941342ef08b0f5077';
 
@@ -52,6 +54,7 @@ var get_products_options = {
 var jsonfile = require('jsonfile');
 var componentfile = 'data/component.json';
 var releasefile = 'data/release.json';
+
 
 
 //all the components in Aha! excluding product_lines
@@ -82,35 +85,48 @@ function getComponentList(file, callback ){
 }
 
 
-var release = {
+var hardcode_release = {
   release:
   {
-    name:'Auto created Milestone',
-  	release_date : '2017-01-31'
+    name:'2017 - 02',
+  	release_date : '2017-02-31'
   }
 };
 
+//console.log(typeof(config));
+//console.log(config.releases);
 
-function postMilestone(componentArray){
-   //var len = components.length;
-   var len = componentArray.length;
-   for (var j = 0; j < len; j ++){
-     component = componentArray[j];
+var releases = config.releases;
+var components = config.components;
+
+
+function postMilestone(components, releases){
+
+   for (var i = 0; i < components.length; i ++){
+     component = components[i].reference_prefix;
      console.log(component);
-     var post_release_options = {
-       method: 'POST',
-       url: base_url + '/api/v1/products/' + component + '/releases' ,
-       headers: { authorization: access_token },
-       body: release,
-       json: true
-     };
+     for (var j =  0; j < releases.length; j++){
+       var post_release_options = {
+         method: 'POST',
+         url: base_url + '/api/v1/products/' + component + '/releases' ,
+         headers: { authorization: access_token },
+         //body: releases[j],
+         json: true
+       };
+       console.log(component);
+       post_release_options.body = releases[j];
 
-     request(post_release_options,function(error,response,body){
-       if (error) throw new Error(error);
-       console.log(body);
-       //response.send("Create Release: "+ release);
-     });
-   }
+       console.log(post_release_options.body);
+
+       request(post_release_options,function(error,response,body){
+         if (error) throw new Error(error);
+         console.log(body.url);
+
+       });
+     } //end loop of releases
+
+   } //end loop of compponents
+
 }
 
 /**
@@ -120,20 +136,11 @@ app.post('/milestones', function(req,res){
 });
 **/
 
+
+
+
 app.post('/milestones', function(req,res){
 
-  getComponentList(componentfile, function(obj){
-      //Array of the component from component.json
-      var array = new Array();
-      console.dir(obj);
-      console.log(obj.components.length);
-      components = obj.components;
-      for (var i = 0; i < components.length; i ++){
-          array.push(components[i].reference_prefix);
-      }
-      console.log(array);
-      res.send("Component List to post Milestones: " + array.toString());
-      postMilestone(array);
-  });
-
+  postMilestone(components, releases);
+  res.send(components.toString() + releases.toString());
 });

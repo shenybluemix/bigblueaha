@@ -1,5 +1,6 @@
 var config =
 {
+
   components:[
     {
       reference_prefix:  'ALPHA'
@@ -8,6 +9,7 @@ var config =
       reference_prefix:  'BP'
     }
   ],
+
   releases:[
     {
       release:
@@ -24,6 +26,7 @@ var config =
       }
     }
   ]
+
 };
 
 exports.config = config;

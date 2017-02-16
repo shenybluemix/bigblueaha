@@ -21,17 +21,24 @@ var app = express();
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
 
+
 // start server on the specified port and binding host
 app.listen(appEnv.port, '0.0.0.0', function() {
   // print a message when the server starts listening
 
   console.log("server starting on " + appEnv.url);
+  console.log("VCAP_SERVICES: "+ appEnv.getService());
 });
 
 var request = require("request");
-var config = require ('./config.js').config;
-var base_url = 'https://bigblue.aha.io';
-var access_token = 'Bearer 14828d1e592ec3ae51b09f89dd4b4988af1a69320c9ca1c941342ef08b0f5077';
+var config = require ('./configs.js').config;
+var base_url = config.aha_base_url;
+
+var ghe_url = config.ghe_url;
+var ghe_personal_token = config.ghe_personal_token;
+
+var access_token = config.aha_access_token;
+var aha_labels = config.aha_labels;
 
 var get_users_options = {
   method: 'GET',
@@ -94,6 +101,11 @@ function postMilestone(components, releases){
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
+app.get('/',function(req,res){
+  res.send("contact sheny@us.ibm.com");
+
+});
+
 app.post('/milestones', function(req,res){
   var body = req.body;
   console.log(typeof(body));
@@ -101,4 +113,27 @@ app.post('/milestones', function(req,res){
   console.log(body.releases);
   postMilestone(body.components, body.releases);
   res.send(JSON.stringify(body.components) + JSON.stringify(body.releases));
+});
+
+app.get('/ghelabels/:org/:repo', function(req,res){
+
+  var post_label_options = {
+    method: 'POST',
+    url: ghe_url + '/repos/' + req.params.org + '/' + req.params.repo + '/labels' ,
+    auth: {
+      user: 'sheny@us.ibm.com',
+      password: ghe_personal_token
+    },
+   json:true
+  };
+
+  for (var i = 0; i < aha_labels.length; i ++){
+    post_label_options.body = aha_labels[i];
+      request(post_label_options, function(error,response, body){
+        if (error) throw new Error(error);
+    });
+  }
+  res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels"+ "\n Aha labels created successfully!");
+
+
 });

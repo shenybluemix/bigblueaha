@@ -10,7 +10,12 @@ var express = require('express');
 
 // cfenv provides access to your Cloud Foundry environment
 // for more info, see: https://www.npmjs.com/package/cfenv
-var cfenv = require('cfenv');
+
+//cfenv-wrapper is a simple wrapper (a local module called cfenv-wrapper) to make local development of Bluemix/Cloud Foundry apps a little easier
+//for more info, see: http://www.tonyerwin.com/2014/10/nodejs-on-bluemix-easier-local.html
+
+//var cfenv = require('cfenv');
+var cfenv = require('./cfenv-wrapper');
 
 // create a new express server
 var app = express();
@@ -27,17 +32,20 @@ app.listen(appEnv.port, '0.0.0.0', function() {
   // print a message when the server starts listening
 
   console.log("server starting on " + appEnv.url);
-  console.log("VCAP_SERVICES: "+ appEnv.getService());
+  console.log("aha_base_url: "+ appEnv.getEnvVar("aha_base_url"));
+
 });
 
 var request = require("request");
 var config = require ('./configs.js').config;
-var base_url = config.aha_base_url;
 
-var ghe_url = config.ghe_url;
-var ghe_personal_token = config.ghe_personal_token;
+var base_url = appEnv.getEnvVar('aha_base_url');
+var access_token = appEnv.getEnvVar('aha_access_token');
 
-var access_token = config.aha_access_token;
+
+var ghe_url = appEnv.getEnvVar('ghe_url');
+var ghe_personal_token = appEnv.getEnvVar('ghe_personal_token');
+
 var aha_labels = config.aha_labels;
 
 var get_users_options = {

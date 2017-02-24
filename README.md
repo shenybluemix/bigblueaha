@@ -35,3 +35,4 @@ sheny@us.ibm.com
       ]
     }
 5. GET http://server:port/ghelabels/:org/:repo
+6. SSO https://bigblueaha.w3ibm.mybluemix.net/login

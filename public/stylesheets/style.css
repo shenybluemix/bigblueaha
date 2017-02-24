@@ -54,7 +54,8 @@ h1 {
 
 table {
 	table-layout: fixed;
-	width: 800px;
+	width: 100%;
+	height: 100%
 	margin: 0 auto;
 	word-wrap: break-word;
 	padding-top:10%;
@@ -67,6 +68,22 @@ th {
 th, td {
 	text-align: left;
 	padding: 2px 20px;
+	height: 100%;
+}
+
+div {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%;
+}
+
+iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .env-var {
@@ -79,4 +96,3 @@ pre {
 	padding: 0;
 	margin: 0;
 }
-

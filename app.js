@@ -14,14 +14,13 @@ var express = require('express');
 //cfenv-wrapper is a simple wrapper (a local module called cfenv-wrapper) to make local development of Bluemix/Cloud Foundry apps a little easier
 //for more info, see: http://www.tonyerwin.com/2014/10/nodejs-on-bluemix-easier-local.html
 
-//var cfenv = require('cfenv');
 var cfenv = require('./cfenv-wrapper');
 
 // create a new express server
 var app = express();
 
 // serve the files out of ./public as our main files
-//app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/public'));
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
@@ -41,42 +40,20 @@ var config = require ('./configs.js').config;
 
 var base_url = appEnv.getEnvVar('aha_base_url');
 var access_token = appEnv.getEnvVar('aha_access_token');
-
-
 var ghe_url = appEnv.getEnvVar('ghe_url');
 var ghe_personal_token = appEnv.getEnvVar('ghe_personal_token');
 
-var aha_labels = config.aha_labels;
+//var aha_labels = config.aha_labels;
+var aha_labels_file = require('./data/aha_labels.json');
+var aha_labels = aha_labels_file.aha_labels;
+var componentfile = require('./data/component.json');
 
-var get_users_options = {
-  method: 'GET',
-  url: base_url + '/api/v1/users?per_page=9999',
-  headers:
-   {
-     authorization: access_token }
- };
+app.get('/test', function(req,res){
+    //res.send(aha_labels.aha_labels.length);
+    res.send(aha_labels);
+    console.log(aha_labels.length);
+});
 
-var get_products_options = {
-  method: 'GET',
-  url: base_url + '/api/v1/products?per_page=9999' ,
-  headers: { authorization: access_token },
-  json:true
-};
-
-var jsonfile = require('jsonfile');
-var componentfile = 'data/component.json';
-var releasefile = 'data/release.json';
-
-
-
-function getComponentList(file, callback ){
-  jsonfile.readFile(file, function(err, obj){
-    callback (obj);
-  });
-}
-
-//var releases = config.releases;
-//var components = config.components;
 
 function postMilestone(components, releases){
 
@@ -101,18 +78,12 @@ function postMilestone(components, releases){
 
        });
      } //end loop of releases
-
    } //end loop of compponents
-
 }
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
-app.get('/',function(req,res){
-  res.send("contact sheny@us.ibm.com");
-
-});
 
 app.post('/milestones', function(req,res){
   var body = req.body;
@@ -143,5 +114,99 @@ app.get('/ghelabels/:org/:repo', function(req,res){
   }
   res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels"+ "\n Aha labels created successfully!");
 
+});
+
+
+// start of  SSO
+
+var saml2 = require('saml2-js');
+var Saml2js = require('saml2js');
+var fs = require('fs');
+var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
+
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+//app.use(bodyParser());
+
+// Create service provider
+var sp_options = {
+  entity_id: "https://bigblue.w3ibm.mybluemix.net/metadata.xml",
+  //private_key: fs.readFileSync("cert/key.pem").toString(),
+  //certificate: fs.readFileSync("cert/cert.pem").toString(),
+  assert_endpoint: "https://bigblue.w3ibm.mybluemix.net/login"
+};
+var sp = new saml2.ServiceProvider(sp_options);
+
+//
+
+var idp_options = {
+  sso_login_url: "https://w3id.alpha.sso.ibm.com/auth/sps/samlidp/saml20/logininitial?RequestBinding=HTTPPost&PartnerId=https://bigblueaha.w3ibm.mybluemix.net/&NameIdFormat=email&Target=https://bigblueaha.w3ibm.mybluemix.net/assert"
+
+  //certificates: fs.readFileSync("cert/w3id.sso.ibm.com").toString()
+};
+var idp = new saml2.IdentityProvider(idp_options);
+
+// ------ Define express endpoints ------
+
+// Starting point for login
+app.get("/login", function(req, res) {
+  //console.log(idp);
+  sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
+    if (err != null)
+      return res.send(500);
+    console.log(login_url);
+    res.redirect(login_url);
+  });
+});
+
+
+function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role){
+  //p_role:  product_owner, contributor, reviewer, viewer, none
+  var newUser = {
+      user: {
+          email: p_eMail,
+          first_name: p_firstName,
+          last_name: p_lastName,
+          role: p_role
+      }
+  };
+
+  var create_user_option = {
+    method: 'POST',
+    url: base_url + '/api/v1/products/' + p_product + '/users' ,
+    headers: { authorization: access_token },
+    //body: newUser,
+    json: true
+  };
+  create_user_option.body = newUser;
+
+  console.log(newUser);
+  console.log(create_user_option);
+
+  /**
+  request(create_user_option,function(error,response,body){
+    if (error) throw new Error(error);
+    return body;
+  });
+  **/
+}
+
+
+// Assert endpoint for when login completes
+app.post("/assert", function(req, res) {
+//app.post("/login/callback", function(req, res) {
+  var options = {request_body: req };
+  //console.log('Body' + JSON.stringify(req.body)) ;
+  var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
+  var parser = new Saml2js(response);
+  var userFromW3 = parser.toObject();
+  createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer');
+
+  return res.json(userFromW3);
+
+    //var email = userFromW3.emailaddress;
+  //res.send('Hello ' + email);
 
 });

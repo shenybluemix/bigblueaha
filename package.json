@@ -13,7 +13,11 @@
 		"jsonfile": "*",
 		"fs-sync": "^0.2.5",
 		"http": "0.0.0",
-		"properties-parser": "^0.2.3"
+		"properties-parser": "^0.2.3",
+		"saml2-js": "1.4.3",
+		"saml2js": "0.1.2",
+		"body-parser": "^1.15.0",
+		"cookie-parser": "^1.4.1"
 	},
 	"repository": {},
 	"engines": {

@@ -1,13 +1,15 @@
+https://bigblueaha.w3ibm.mybluemix.net/
 
-sheny@us.ibm.com
+Web Application for enhancement of Aha!(bigblue.aha.io) 
 
-## Run the app locally
+Contact: sheny@us.ibm.com
 
-1. [Install Node.js][]
-2. cd into the app directory
-3. Run `node app.js` to start the app
-4. POST http://server:port/milestones
+##Following API Endpoint##
+
+1. POST /milestones
+   -> Create milestones(releases) for components	
    Example:
+   
     {
       "components":[
         {
@@ -34,5 +36,8 @@ sheny@us.ibm.com
         }
       ]
     }
-5. GET http://server:port/ghelabels/:org/:repo
-6. SSO https://bigblueaha.w3ibm.mybluemix.net/login
+2. GET /ghelabels/:org/:repo
+	-> Automatically create Aha! Labels 
+3. GET /login
+	-> Automatica create Aha "Reviewer" user through w3ID SSO 
+

@@ -1,0 +1,6 @@
+[
+  {"name":"aha_base_url","value":"https://bigblue.aha.io"},
+  {"name":"aha_access_token","value":"afb8a437f5bacccd05073d3d5a80683fe522f1572a504b6eeaf3ecfee59b67d8"},
+  {"name":"ghe_url","value":"https://github.ibm.com"},
+  {"name":"ghe_personal_token","value":"2aad708695c5d73e679b297d795fd16fcc2dcfef"}
+]

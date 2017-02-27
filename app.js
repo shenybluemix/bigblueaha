@@ -185,12 +185,11 @@ function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role){
   console.log(newUser);
   console.log(create_user_option);
 
-  /**
+
   request(create_user_option,function(error,response,body){
     if (error) throw new Error(error);
     return body;
   });
-  **/
 }
 
 
@@ -202,10 +201,10 @@ app.post("/assert", function(req, res) {
   var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
-  createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer');
+  var creatResult = createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer');
 
-  return res.json(userFromW3);
-
+  res.json(userFromW3);
+  return console.log(creatResult);
     //var email = userFromW3.emailaddress;
   //res.send('Hello ' + email);
 

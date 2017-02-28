@@ -48,11 +48,6 @@ var aha_labels_file = require('./data/aha_labels.json');
 var aha_labels = aha_labels_file.aha_labels;
 var componentfile = require('./data/component.json');
 
-app.get('/test', function(req,res){
-    //res.send(aha_labels.aha_labels.length);
-    res.send(aha_labels);
-    console.log(aha_labels.length);
-});
 
 
 function postMilestone(components, releases){
@@ -110,7 +105,7 @@ app.get('/ghelabels/:org/:repo', function(req,res){
     post_label_options.body = aha_labels[i];
       request(post_label_options, function(error,response, body){
         if (error) throw new Error(error);
-    });
+      });
   }
   res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels"+ "\n Aha labels created successfully!");
 
@@ -161,7 +156,7 @@ app.get("/login", function(req, res) {
   });
 });
 
-
+/**
 function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role){
   //p_role:  product_owner, contributor, reviewer, viewer, none
   var newUser = {
@@ -182,16 +177,14 @@ function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role){
   };
   create_user_option.body = newUser;
 
-  console.log(newUser);
-  console.log(create_user_option);
-
+  console.log("newUser to create: " + newUser);
 
   request(create_user_option,function(error,response,body){
     if (error) throw new Error(error);
-    return body;
+    console.log("creat new users:" + body);
   });
 }
-
+**/
 
 // Assert endpoint for when login completes
 app.post("/assert", function(req, res) {
@@ -201,11 +194,42 @@ app.post("/assert", function(req, res) {
   var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
-  var creatResult = createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer');
+  //var creatResult = createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer');
 
-  res.json(userFromW3);
-  return console.log(creatResult);
-    //var email = userFromW3.emailaddress;
-  //res.send('Hello ' + email);
+  var newUser = {
+      user: {
+          email: userFromW3.emailaddress,
+          first_name: userFromW3.firstName,
+          last_name: userFromW3.lastName,
+          role: 'reviewer'
+      }
+  };
+
+  var create_user_option = {
+    method: 'POST',
+    url: base_url + '/api/v1/products/' + 'COMPANY' + '/users' ,
+    headers: {
+      authorization: access_token,
+     },
+    //body: newUser,
+    json: true
+  };
+  create_user_option.body = newUser;
+
+  console.log("newUser to create: \n");
+  console.log(newUser);
+
+  request(create_user_option,function(error,response,body){
+    if (error) throw new Error(error);
+
+
+    console.log("call Aha API to create user: \n");
+    console.log(response.headers);
+    //console.log(userFromW3);
+    res.write ("w3 login info: \n" + "<div>" + JSON.stringify(userFromW3) + "/div" + "\n");
+    res.write ("======================================================\n");
+    res.write ("Create User at https://bigblue.aha.io \n" + JSON.stringify(body) + "\n");
+    res.end();
+  });
 
 });

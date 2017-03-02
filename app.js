@@ -36,14 +36,22 @@ app.listen(appEnv.port, '0.0.0.0', function() {
 });
 
 var request = require("request");
-var config = require ('./configs.js').config;
 
+
+//variable for https://bigblue.aha.io
 var base_url = appEnv.getEnvVar('aha_base_url');
 var access_token = appEnv.getEnvVar('aha_access_token');
+
+//variable for https://github.ibm.com
 var ghe_url = appEnv.getEnvVar('ghe_url');
 var ghe_personal_token = appEnv.getEnvVar('ghe_personal_token');
 
-//var aha_labels = config.aha_labels;
+//variable for w3id SSO
+var sp_entity_id = appEnv.getEnvVar('sp_entity_id');
+var sp_assert_endpoint = appEnv.getEnvVar('sp_assert_endpoint');
+var idp_sso_login_url = appEnv.getEnvVar('idp_sso_login_url');
+
+
 var aha_labels_file = require('./data/aha_labels.json');
 var aha_labels = aha_labels_file.aha_labels;
 var componentfile = require('./data/component.json');
@@ -69,7 +77,7 @@ function postMilestone(components, releases){
 
        request(post_release_options,function(error,response,body){
          if (error) throw new Error(error);
-         //console.log(body.url.toString());
+         console.log("postMilestones: " + body.url.toString());
 
        });
      } //end loop of releases
@@ -105,6 +113,7 @@ app.get('/ghelabels/:org/:repo', function(req,res){
     post_label_options.body = aha_labels[i];
       request(post_label_options, function(error,response, body){
         if (error) throw new Error(error);
+        console.log(body);
       });
   }
   res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels"+ "\n Aha labels created successfully!");
@@ -127,18 +136,17 @@ app.use(bodyParser.json());
 
 // Create service provider
 var sp_options = {
-  entity_id: "https://bigblue.w3ibm.mybluemix.net/metadata.xml",
+  entity_id: sp_entity_id,
   //private_key: fs.readFileSync("cert/key.pem").toString(),
   //certificate: fs.readFileSync("cert/cert.pem").toString(),
-  assert_endpoint: "https://bigblue.w3ibm.mybluemix.net/login"
+  assert_endpoint: sp_assert_endpoint
 };
 var sp = new saml2.ServiceProvider(sp_options);
 
 //
 
 var idp_options = {
-  sso_login_url: "https://w3id.alpha.sso.ibm.com/auth/sps/samlidp/saml20/logininitial?RequestBinding=HTTPPost&PartnerId=https://bigblueaha.w3ibm.mybluemix.net/&NameIdFormat=email&Target=https://bigblueaha.w3ibm.mybluemix.net/assert"
-
+  sso_login_url: idp_sso_login_url
   //certificates: fs.readFileSync("cert/w3id.sso.ibm.com").toString()
 };
 var idp = new saml2.IdentityProvider(idp_options);
@@ -156,8 +164,8 @@ app.get("/login", function(req, res) {
   });
 });
 
-/**
-function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role){
+
+function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role, callback){
   //p_role:  product_owner, contributor, reviewer, viewer, none
   var newUser = {
       user: {
@@ -177,14 +185,12 @@ function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role){
   };
   create_user_option.body = newUser;
 
-  console.log("newUser to create: " + newUser);
-
   request(create_user_option,function(error,response,body){
     if (error) throw new Error(error);
-    console.log("creat new users:" + body);
+    callback(body);
   });
 }
-**/
+
 
 // Assert endpoint for when login completes
 app.post("/assert", function(req, res) {
@@ -194,42 +200,17 @@ app.post("/assert", function(req, res) {
   var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
-  //var creatResult = createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer');
+  createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
 
-  var newUser = {
-      user: {
-          email: userFromW3.emailaddress,
-          first_name: userFromW3.firstName,
-          last_name: userFromW3.lastName,
-          role: 'reviewer'
-      }
-  };
-
-  var create_user_option = {
-    method: 'POST',
-    url: base_url + '/api/v1/products/' + 'COMPANY' + '/users' ,
-    headers: {
-      authorization: access_token,
-     },
-    //body: newUser,
-    json: true
-  };
-  create_user_option.body = newUser;
-
-  console.log("newUser to create: \n");
-  console.log(newUser);
-
-  request(create_user_option,function(error,response,body){
-    if (error) throw new Error(error);
-
-
-    console.log("call Aha API to create user: \n");
-    console.log(response.headers);
-    //console.log(userFromW3);
-    res.write ("w3 login info: \n" + "<div>" + JSON.stringify(userFromW3) + "/div" + "\n");
-    res.write ("======================================================\n");
-    res.write ("Create User at https://bigblue.aha.io \n" + JSON.stringify(body) + "\n");
-    res.end();
+    if (body.error){
+      res.write("Create User at https://bigblue.aha.io failed \n");
+      res.write(JSON.stringify(body));
+      res.end();
+    }
+    else{
+      res.json(body);
+    }
   });
+
 
 });

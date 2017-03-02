@@ -1,6 +1,1 @@
-[
-  {"name":"aha_base_url","value":"https://bigblue.aha.io"},
-  {"name":"aha_access_token","value":"afb8a437f5bacccd05073d3d5a80683fe522f1572a504b6eeaf3ecfee59b67d8"},
-  {"name":"ghe_url","value":"https://github.ibm.com"},
-  {"name":"ghe_personal_token","value":"2aad708695c5d73e679b297d795fd16fcc2dcfef"}
-]
+[{"name":"aha_access_token","value":"Bearer 16ab488a15092114e4a538db3fc9572c2c5c5147d3d3d7275698c97e0d557aba"},{"name":"aha_base_url","value":"https://bigblue.aha.io"},{"name":"ghe_personal_token","value":"6b2e547a90eca6aa7cd4186758604f05246385e6"},{"name":"ghe_url","value":"https://github.ibm.com/api/v3"},{"name":"sp_entity_id","value":"https://bigblue.w3ibm.mybluemix.net"},{"name":"sp_assert_endpoint","value":"https://bigblue.w3ibm.mybluemix.net/assert"},{"name":"idp_sso_login_url","value":"https://w3id.alpha.sso.ibm.com/auth/sps/samlidp/saml20/logininitial?RequestBinding=HTTPPost&PartnerId=https://bigblueaha.w3ibm.mybluemix.net/&NameIdFormat=email&Target=https://bigblueaha.w3ibm.mybluemix.net/assert"}]

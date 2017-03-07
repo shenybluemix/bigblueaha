@@ -26,34 +26,47 @@ app.use(express.static(__dirname + '/public'));
 var appEnv = cfenv.getAppEnv();
 
 
+app.set('views', __dirname + '/public/views')
+app.set('view engine', 'pug');
+
+
+app.get('/test', function (req, res) {
+  res.render('assert', { title: 'Hey', message: 'Hello there!' })
+})
+
 // start server on the specified port and binding host
 app.listen(appEnv.port, '0.0.0.0', function() {
   // print a message when the server starts listening
 
   console.log("server starting on " + appEnv.url);
-  console.log("aha_base_url: "+ base_url);
-
+  console.log("aha_base_url: "+ appEnv.getEnvVar("aha_base_url"));
+  console.log(__dirname);
 });
 
 var request = require("request");
-var config = require ('./configs.js').config;
 
+
+//variable for https://bigblue.aha.io
 var base_url = appEnv.getEnvVar('aha_base_url');
-    base_url = 'https://bigblue.aha.io';
 var access_token = appEnv.getEnvVar('aha_access_token');
-    access_token = 'Bearer 16ab488a15092114e4a538db3fc9572c2c5c5147d3d3d7275698c97e0d557aba';
+
+//variable for https://github.ibm.com
 var ghe_url = appEnv.getEnvVar('ghe_url');
-    ghe_url = 'https://github.ibm.com/api/v3';
 var ghe_personal_token = appEnv.getEnvVar('ghe_personal_token');
-    ghe_personal_token = '6b2e547a90eca6aa7cd4186758604f05246385e6';
-//var aha_labels = config.aha_labels;
+
+//variable for w3id SSO
+var sp_entity_id = appEnv.getEnvVar('sp_entity_id');
+var sp_assert_endpoint = appEnv.getEnvVar('sp_assert_endpoint');
+var idp_sso_login_url = appEnv.getEnvVar('idp_sso_login_url');
+
+
 var aha_labels_file = require('./data/aha_labels.json');
 var aha_labels = aha_labels_file.aha_labels;
 var componentfile = require('./data/component.json');
 
 
 
-function postMilestone(components, releases, callback){
+function postMilestone(components, releases){
 
    for (var i = 0; i < components.length; i ++){
      component = components[i].reference_prefix;
@@ -72,7 +85,8 @@ function postMilestone(components, releases, callback){
 
        request(post_release_options,function(error,response,body){
          if (error) throw new Error(error);
-         callback(body);
+         console.log("postMilestones: " + body.url.toString());
+
        });
      } //end loop of releases
    } //end loop of compponents
@@ -87,10 +101,8 @@ app.post('/milestones', function(req,res){
   console.log(typeof(body));
   console.log(body.components);
   console.log(body.releases);
-  postMilestone(body.components, body.releases, function(body){
-    res.write(JSON.stringify(body));
-  });
-
+  postMilestone(body.components, body.releases);
+  res.send(JSON.stringify(body.components) + JSON.stringify(body.releases));
 });
 
 app.get('/ghelabels/:org/:repo', function(req,res){
@@ -105,17 +117,16 @@ app.get('/ghelabels/:org/:repo', function(req,res){
    json:true
   };
 
-
   for (var i = 0; i < aha_labels.length; i ++){
     post_label_options.body = aha_labels[i];
       request(post_label_options, function(error,response, body){
         if (error) throw new Error(error);
+        console.log(body);
       });
   }
   res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels"+ "\n Aha labels created successfully!");
 
 });
-
 
 
 // start of  SSO
@@ -133,18 +144,17 @@ app.use(bodyParser.json());
 
 // Create service provider
 var sp_options = {
-  entity_id: "https://bigblue.w3ibm.mybluemix.net/metadata.xml",
+  entity_id: sp_entity_id,
   //private_key: fs.readFileSync("cert/key.pem").toString(),
   //certificate: fs.readFileSync("cert/cert.pem").toString(),
-  assert_endpoint: "https://bigblue.w3ibm.mybluemix.net/login"
+  assert_endpoint: sp_assert_endpoint
 };
 var sp = new saml2.ServiceProvider(sp_options);
 
 //
 
 var idp_options = {
-  sso_login_url: "https://w3id.alpha.sso.ibm.com/auth/sps/samlidp/saml20/logininitial?RequestBinding=HTTPPost&PartnerId=https://bigblueaha.w3ibm.mybluemix.net/&NameIdFormat=email&Target=https://bigblueaha.w3ibm.mybluemix.net/assert"
-
+  sso_login_url: idp_sso_login_url
   //certificates: fs.readFileSync("cert/w3id.sso.ibm.com").toString()
 };
 var idp = new saml2.IdentityProvider(idp_options);
@@ -183,16 +193,12 @@ function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role, callback){
   };
   create_user_option.body = newUser;
 
-  console.log("newUser to create: " + newUser);
-
   request(create_user_option,function(error,response,body){
     if (error) throw new Error(error);
-    console.log("creat new users:" + body);
     callback(body);
-
   });
-
 }
+
 
 // Assert endpoint for when login completes
 app.post("/assert", function(req, res) {
@@ -203,8 +209,17 @@ app.post("/assert", function(req, res) {
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
   createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
-    
-    res.json(body);
+
+    if (body.error){
+      res.write("Create User at https://bigblue.aha.io failed \n");
+      res.write(JSON.stringify(body));
+      res.end();
+    }
+    else{
+      res.json(body);
+    }
   });
+
+
 
 });

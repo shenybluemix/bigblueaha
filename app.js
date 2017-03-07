@@ -19,6 +19,9 @@ var cfenv = require('./cfenv-wrapper');
 // create a new express server
 var app = express();
 
+app.set('views', __dirname + '/public/views')
+app.set('view engine', 'pug');
+
 // serve the files out of ./public as our main files
 app.use(express.static(__dirname + '/public'));
 
@@ -31,8 +34,7 @@ app.listen(appEnv.port, '0.0.0.0', function() {
   // print a message when the server starts listening
 
   console.log("server starting on " + appEnv.url);
-  console.log("aha_base_url: "+ appEnv.getEnvVar("aha_base_url"));
-
+  console.log("__dirname: " + __dirname);
 });
 
 var request = require("request");
@@ -154,7 +156,7 @@ var idp = new saml2.IdentityProvider(idp_options);
 // ------ Define express endpoints ------
 
 // Starting point for login
-app.get("/login", function(req, res) {
+app.use("/login", function(req, res) {
   //console.log(idp);
   sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
     if (err != null)
@@ -203,14 +205,37 @@ app.post("/assert", function(req, res) {
   createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
 
     if (body.error){
+      /**
       res.write("Create User at https://bigblue.aha.io failed \n");
-      res.write(JSON.stringify(body));
+      res.write("Reason: \n");
+      res.write(JSON.stringify(body.errors.message) + "\n");
+      res.write("You should already have an Aha account.")
+      **/
+      res.render('assert',
+        {
+        title: 'Create User at https://bigblue.aha.io failed',
+        message: "Create User at https://bigblue.aha.io failed. \n Reason: " + body.errors.message
+        }
+      );
       res.end();
     }
     else{
-      res.json(body);
+
+      res.render('assert', {
+
+        title: 'Create User at https://bigblue.aha.io successfully',
+        message: "User: " + body.name + " " + body.email + " has been created in Aha as a " + body.role_description
+
+      });
+      /**
+      res.write("User: " + body.name + "\n");
+      res.write(body.email + "\n");
+      res.write("has been created in Aha as a " + body.role_description + ".\n");
+      res.write("Please go to login with w3id at https://bigblue.aha.io.")
+      **/
+      res.end();
+      //res.json(body);
     }
   });
-
 
 });

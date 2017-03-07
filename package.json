@@ -1,26 +1,26 @@
 {
-	"name": "NodejsStarterApp",
-	"version": "0.0.1",
-	"private": true,
-	"scripts": {
-		"start": "node app.js"
-	},
-	"dependencies": {
-		"express": "4.13.x",
-		"cfenv": "1.0.x",
-		"request" : "*",
-		"body-parser" : "*",
-		"jsonfile": "*",
-		"fs-sync": "^0.2.5",
-		"http": "0.0.0",
-		"properties-parser": "^0.2.3",
-		"saml2-js": "1.4.3",
-		"saml2js": "0.1.2",
-		"body-parser": "^1.15.0",
-		"cookie-parser": "^1.4.1"
-	},
-	"repository": {},
-	"engines": {
-		"node": "4.x"
-	}
+  "name": "NodejsStarterApp",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.15.0",
+    "cfenv": "1.0.x",
+    "cookie-parser": "^1.4.1",
+    "express": "4.13.x",
+    "fs-sync": "^0.2.5",
+    "http": "0.0.0",
+    "jsonfile": "*",
+    "properties-parser": "^0.2.3",
+    "pug": "^2.0.0-beta11",
+    "request": "*",
+    "saml2-js": "1.4.3",
+    "saml2js": "0.1.2"
+  },
+  "repository": {},
+  "engines": {
+    "node": "4.x"
+  }
 }

@@ -41,8 +41,8 @@ var request = require("request");
 
 
 //variable for https://bigblue.aha.io
-var base_url = appEnv.getEnvVar('aha_base_url');
-var access_token = appEnv.getEnvVar('aha_access_token');
+var aha_base_url = appEnv.getEnvVar('aha_base_url');
+var aha_access_token = appEnv.getEnvVar('aha_access_token');
 
 //variable for https://github.ibm.com
 var ghe_url = appEnv.getEnvVar('ghe_url');
@@ -67,8 +67,8 @@ function postMilestone(components, releases){
      for (var j =  0; j < releases.length; j++){
        var post_release_options = {
          method: 'POST',
-         url: base_url + '/api/v1/products/' + component + '/releases' ,
-         headers: { authorization: access_token },
+         url: aha_base_url + '/api/v1/products/' + component + '/releases' ,
+         headers: { authorization: aha_access_token },
          //body: releases[j],
          json: true
        };
@@ -118,7 +118,7 @@ app.get('/ghelabels/:org/:repo', function(req,res){
         console.log(body);
       });
   }
-  res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels"+ "\n Aha labels created successfully!");
+  res.send("https://github.ibm.com/" + req.params.org + "/" + req.params.repo + "/labels \n"+ "\n Aha labels created successfully!");
 
 });
 
@@ -180,8 +180,8 @@ function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role, callback){
 
   var create_user_option = {
     method: 'POST',
-    url: base_url + '/api/v1/products/' + p_product + '/users' ,
-    headers: { authorization: access_token },
+    url: aha_base_url + '/api/v1/products/' + p_product + '/users' ,
+    headers: { authorization: aha_access_token },
     //body: newUser,
     json: true
   };
@@ -202,40 +202,88 @@ app.post("/assert", function(req, res) {
   var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
-  createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
+  console.log("userFromW3:" + userFromW3 + "\n");
 
-    if (body.error){
-      /**
-      res.write("Create User at https://bigblue.aha.io failed \n");
-      res.write("Reason: \n");
-      res.write(JSON.stringify(body.errors.message) + "\n");
-      res.write("You should already have an Aha account.")
-      **/
-      res.render('assert',
-        {
-        title: 'Create User at https://bigblue.aha.io failed',
-        message: "Create User at https://bigblue.aha.io failed. \n Reason: " + body.errors.message
+  var qs_options = { method: 'GET',
+      url: aha_base_url + '/api/v1/users/',
+      qs: { email: userFromW3.emailaddress },
+      headers:{ authorization: aha_access_token }, 
+      json: true
+  };
+
+
+  request(qs_options, function (error, response, body) {
+    if (error) throw new Error(error);
+    console.log(body.users);
+    if (body.users == undefined){
+      //the user does not exist in Aha! create the user with "reviewer" role!
+
+      createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
+
+        if (body.error){
+
+          res.json(body);
+          res.end();
+          
         }
-      );
-      res.end();
+        else{
+
+          res.render('assert', {
+            title: 'Create User at https://bigblue.aha.io successfully',
+            message: "User: " + body.user.name + " " + body.user.email + " has been created in Aha as a " + body.role_description
+          });
+          res.end();
+        }
+      
+      });
+
+    }// end of (body.users == undefined)
+    else if ((body.users).length == 1){
+      console.log("user exist");
+      var user = body.users[0];
+      console.log( user.product_roles);
+      var product_role = user.product_roles[0];
+      var user_id = user.id;
+      if ( product_role.product_id == '6296862418650925049' && product_role.role == 0 ) {
+          console.log("user is a none on IBM");
+          //TODO: update user role
+            var update_product_roles = {
+              method: 'POST',
+              url: aha_base_url + '/api/v1/users/' + user_id + '/product_roles' ,
+              headers: { authorization: aha_access_token },
+              body: { product_role: { role: 'reviewer', product_id: '6296862418650925049' } },
+              json: true
+            };
+
+            request(update_product_roles, function(error,response,body){
+                if (error) throw new Error(error);
+                console.log(body);
+                res.render('assert', {
+                  title: 'Create User at https://bigblue.aha.io successfully',
+                  message: 'Your role in Aha! has been updated to a reviewer.' 
+                });
+                res.end();
+            });
+
+      } 
+      else {
+        res.render('assert',
+          { title: 'Create User at https://bigblue.aha.io failed',
+            message: "Create user at https://bigblue.aha.io failed. \n Reason: the email is already in use \n You should already have a user in Aha!\n Contact your OM to grant your role in Aha!"
+          }
+        );
+        res.end();
+      }
+
     }
     else{
 
-      res.render('assert', {
+      // more than one user has the same email addres...
+      // should not exist
 
-        title: 'Create User at https://bigblue.aha.io successfully',
-        message: "User: " + body.name + " " + body.email + " has been created in Aha as a " + body.role_description
-
-      });
-      /**
-      res.write("User: " + body.name + "\n");
-      res.write(body.email + "\n");
-      res.write("has been created in Aha as a " + body.role_description + ".\n");
-      res.write("Please go to login with w3id at https://bigblue.aha.io.")
-      **/
-      res.end();
-      //res.json(body);
+      res.json(body);
     }
-  });
+
+  }); // end of user qs request
 
 });

@@ -219,7 +219,49 @@ app.post("/assert", function(req, res) {
       res.json(body);
     }
   });
+});
 
 
+app.get('/testuserqs', function(req,res){
 
+var options = { method: 'GET',
+  url: 'https://bigblue.aha.io/api/v1/users/',
+  qs: { email: 'c@us.ibm.com',
+        fields: '*' },
+  headers: 
+   { 
+     authorization: 'Bearer 16ab488a15092114e4a538db3fc9572c2c5c5147d3d3d7275698c97e0d557aba' }, 
+  json:true
+  };
+
+
+  request(options, function (error, response, body) {
+    if (error) throw new Error(error);
+    console.log(body);
+    console.log(typeof(body));
+    if (body.users == undefined){
+      res.send("User does not exist");
+      res.end;
+    }
+    
+    else if ((body.users).length == 1){
+      console.log("user exist");
+      var user = body.users[0];
+      console.log( user.product_roles);
+      var product_role = user.product_roles[0];
+      if ( product_role.product_id == '6296862418650925049' && product_role.role == 0 ) {
+          console.log("user is a none on IBM");
+          //create user
+      } 
+
+    }
+    else{
+
+      // more than one user has the same email addres...
+      // should not exist
+
+      res.json(body);
+    }
+
+  });
 });

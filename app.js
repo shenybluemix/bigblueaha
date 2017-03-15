@@ -202,7 +202,7 @@ app.post("/assert", function(req, res) {
   var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
-  console.log("userFromW3:" + userFromW3 + "\n");
+  console.log("userFromW3:" + JSON.stringify(userFromW3) + "\n");
 
   var qs_options = { method: 'GET',
       url: aha_base_url + '/api/v1/users/',
@@ -214,27 +214,22 @@ app.post("/assert", function(req, res) {
 
   request(qs_options, function (error, response, body) {
     if (error) throw new Error(error);
-    console.log(body.users);
+    console.log("User Query: " + body);
     if (body.users == undefined){
       //the user does not exist in Aha! create the user with "reviewer" role!
-
+      console.log("user does not exist in Aha! Create user with reviewer role");
       createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
-
         if (body.error){
-
           res.json(body);
           res.end();
-          
         }
         else{
-
           res.render('assert', {
             title: 'Create User at https://bigblue.aha.io successfully',
             message: "User: " + body.user.name + " " + body.user.email + " has been created in Aha as a " + body.role_description
           });
           res.end();
         }
-      
       });
 
     }// end of (body.users == undefined)
@@ -244,7 +239,7 @@ app.post("/assert", function(req, res) {
       console.log( user.product_roles);
       var product_role = user.product_roles[0];
       var user_id = user.id;
-      if ( product_role.product_id == '6296862418650925049' && product_role.role == 0 ) {
+      if ( product_role == undefined || product_role == null || (product_role.product_id == '6296862418650925049' && product_role.role == 0) ) {
           console.log("user is a none on IBM");
           //TODO: update user role
             var update_product_roles = {
@@ -259,14 +254,16 @@ app.post("/assert", function(req, res) {
                 if (error) throw new Error(error);
                 console.log(body);
                 res.render('assert', {
-                  title: 'Create User at https://bigblue.aha.io successfully',
-                  message: 'Your role in Aha! has been updated to a reviewer.' 
+                  title: 'Update User at https://bigblue.aha.io successfully',
+                  message: 'Your role in Aha! has been updated to a reviewer on IBM.' 
                 });
                 res.end();
             });
 
       } 
       else {
+
+
         res.render('assert',
           { title: 'Create User at https://bigblue.aha.io failed',
             message: "Create user at https://bigblue.aha.io failed. \n Reason: the email is already in use \n You should already have a user in Aha!\n Contact your OM to grant your role in Aha!"
@@ -280,7 +277,7 @@ app.post("/assert", function(req, res) {
 
       // more than one user has the same email addres...
       // should not exist
-
+      console.log("More than one user has the same email address...");
       res.json(body);
     }
 

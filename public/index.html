@@ -10,76 +10,10 @@
   </head>
 
   <body>
-    <table>
-      <tr>
-        <td>
-          <h1 id="message">This Web Application provides the following endpoint for bigblue.aha.io </h1>
-          <p class='description'> Technical Contact: sheny@us.ibm.com</p>
-        </td>
-      </tr>
-      <tr>
-        <td>
-        <h3>Base URL: https://bigblueaha.w3ibm.mybluemix.net</h3>
-        <td>
-      </tr>
-      <tr>
-        <td>
-          <h3>GET /login
-          	-> Automatically create a user with "reviewer" role in Aha! through w3ID SSO </h3>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <h3>
-            GET /ghelabels/[org]/[repo]
-            	-> Automatically create Aha! Labels in GHE repository
-          </h3>
-          <p>
-            Example: https://bigblueaha.w3ibm.mybluemix.net/ghelabels/ibmcloud/TestAha
-          </p>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <h3>
-          POST /milestones
-             -> Create milestones(releases) for components
-          </h3>
-          <p>
-             Example:
-
-              {
-                "components":[
-                  {
-                    "reference_prefix":  "BP"
-                  },
-                  {
-                    "reference_prefix":  "TRAN"
-                  }
-                ],
-                "releases":[
-                  {
-                    "release":
-                    {
-                      "name":"TEST 2",
-                      "release_date": "2017-02-28"
-                    }
-                  },
-                  {
-                    "release":
-                    {
-                      "name":"TEST 3",
-                      "release_date": "2017-02-30"
-                    }
-                  }
-                ]
-              }
-
-          </p>
-        </td>
-      </tr>
-
-  </table>
+    <h1>User On-Boarding portal of bigblue Aha! <a href="https://bigblue.aha.io">https://bigblue.aha.io </a></h1>
+    <h4>Technical Contact: sheny@us.ibm.com; jeffb@us.ibm.com</h4>
+    Click  <a href = "https://bigblueaha.w3ibm.mybluemix.net/login">this link</a> to create your user on Aha! as self-service
+    <p><div>This link will use your w3id/password to authenticate and will only create the user as a Reviewer. </div></p>
   </body>
 
 </html>

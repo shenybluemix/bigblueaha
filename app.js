@@ -263,7 +263,6 @@ app.post("/assert", function(req, res) {
       } 
       else {
 
-
         res.render('assert',
           { title: 'Create User at https://bigblue.aha.io failed',
             message: "Create user at https://bigblue.aha.io failed. \n Reason: the email is already in use \n You should already have a user in Aha!\n Contact your OM to grant your role in Aha!"

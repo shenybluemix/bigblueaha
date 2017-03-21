@@ -23,7 +23,7 @@ app.set('views', __dirname + '/public/views')
 app.set('view engine', 'pug');
 
 // serve the files out of ./public as our main files
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/public')); 
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
@@ -90,6 +90,11 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
 
+app.get('/test', function(req,res){
+  res.json({Name:'Test'});
+
+});
+
 app.post('/milestones', function(req,res){
   var body = req.body;
   console.log(typeof(body));
@@ -97,6 +102,29 @@ app.post('/milestones', function(req,res){
   console.log(body.releases);
   postMilestone(body.components, body.releases);
   res.send(JSON.stringify(body.components) + JSON.stringify(body.releases));
+});
+
+app.delete('/milestones/:product', function(req,res){
+ 
+  var options = { 
+    method: 'GET',
+    url: aha_base_url +'/api/v1/products/' + req.params.product +'/releases',
+    qs: { fields: 'url' },
+    headers: 
+    { authorization: aha_access_token }, 
+    json: true
+    };
+
+    request(options, function (error, response, body) {
+     if (error) throw new Error(error);
+     for (var i =0; i < body.releases.length; i++){
+        var reference_num = body.releases
+        
+    } 
+
+  });
+
+//todo
 });
 
 app.get('/ghelabels/:org/:repo', function(req,res){
@@ -196,9 +224,7 @@ function createUser(p_product,p_firstName,p_lastName,p_eMail,p_role, callback){
 
 // Assert endpoint for when login completes
 app.post("/assert", function(req, res) {
-//app.post("/login/callback", function(req, res) {
   var options = {request_body: req };
-  //console.log('Body' + JSON.stringify(req.body)) ;
   var response = new Buffer(req.body.SAMLResponse || req.body.SAMLRequest, 'base64');
   var parser = new Saml2js(response);
   var userFromW3 = parser.toObject();
@@ -262,7 +288,7 @@ app.post("/assert", function(req, res) {
 
       } 
       else {
-
+        
         res.render('assert',
           { title: 'Create User at https://bigblue.aha.io failed',
             message: "Create user at https://bigblue.aha.io failed. \n Reason: the email is already in use \n You should already have a user in Aha!\n Contact your OM to grant your role in Aha!"

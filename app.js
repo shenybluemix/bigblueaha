@@ -240,8 +240,8 @@ app.post("/assert", function(req, res) {
 
   request(qs_options, function (error, response, body) {
     if (error) throw new Error(error);
-    console.log("User Query: " + body);
-    if (body.users == undefined){
+    console.log("User Query: " + JSON.stringify(body) + "\n");
+    if (body.pagination.total_records == 0){
       //the user does not exist in Aha! create the user with "reviewer" role!
       console.log("user does not exist in Aha! Create user with reviewer role");
       createUser('COMPANY',userFromW3.firstName,userFromW3.lastName,userFromW3.emailaddress,'reviewer', function(body){
@@ -258,7 +258,7 @@ app.post("/assert", function(req, res) {
         }
       });
 
-    }// end of (body.users == undefined)
+    }// end if body.pagination.total_records == 0
     else if ((body.users).length == 1){
       console.log("user exist");
       var user = body.users[0];
@@ -281,24 +281,25 @@ app.post("/assert", function(req, res) {
                 console.log(body);
                 res.render('assert', {
                   title: 'Update User at https://bigblue.aha.io successfully',
-                  message: 'Your role in Aha! has been updated to a reviewer on IBM.' 
+                  message: 'Your role in Aha! has been updated to a "reviewer" in IBM.' 
                 });
                 res.end();
             });
 
       } 
       else {
-        
+        console.log("user is already have roles on IBM");
         res.render('assert',
           { title: 'Create User at https://bigblue.aha.io failed',
-            message: "Create user at https://bigblue.aha.io failed. \n Reason: the email is already in use \n You should already have a user in Aha!\n Contact your OM to grant your role in Aha!"
+            message: "Create user at https://bigblue.aha.io failed.",
+            detail_message: "Reason: the email is already in use. You should already have a user in Aha! Contact OM if you need to access to other segment in Aha!"
           }
         );
         res.end();
       }
 
     }
-    else{
+    else if (body.pagination.total_records > 1){
 
       // more than one user has the same email addres...
       // should not exist
